@@ -1,8 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:vakeel_diary/Database/crud_operation.dart';
 import 'package:vakeel_diary/Pages/add_case_page.dart';
+import 'package:vakeel_diary/Database/crud_operation.dart'; // Ensure this is imported
+
+// --- THEME COLORS ---
+const Color primaryBlue = Color(0xFF1A237E);
+const Color darkGray = Color(0xFF424242);
+const Color mediumGray = Color(0xFF9E9E9E);
+const Color offWhite = Color(0xFFF5F5F5);
 
 // Reusable text field widget
 Widget buildTextField(
@@ -15,22 +21,26 @@ Widget buildTextField(
     controller: controller,
     keyboardType: keyboardType,
     maxLines: maxLines,
-    cursorColor: Colors.black,
+    cursorColor: primaryBlue,
     decoration: InputDecoration(
       labelText: labelText,
-      labelStyle: const TextStyle(color: Colors.black87),
-      hintStyle: const TextStyle(color: Colors.black26),
+      labelStyle: const TextStyle(color: darkGray),
+      hintStyle: const TextStyle(color: mediumGray),
       enabledBorder: OutlineInputBorder(
-        borderSide: const BorderSide(color: Colors.black26, width: 1.5),
-        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: mediumGray, width: 2.0),
+        borderRadius: BorderRadius.circular(12),
       ),
       focusedBorder: OutlineInputBorder(
-        borderSide: const BorderSide(color: Colors.black, width: 2.0),
-        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: primaryBlue, width: 2.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      contentPadding: const EdgeInsets.symmetric(
+        vertical: 16.0,
+        horizontal: 16.0,
       ),
       floatingLabelBehavior: FloatingLabelBehavior.auto,
     ),
-    style: const TextStyle(color: Colors.black),
+    style: const TextStyle(color: darkGray),
   );
 }
 
@@ -45,26 +55,31 @@ Widget buildDateField(
     onTap: onTap,
     decoration: InputDecoration(
       labelText: labelText,
-      labelStyle: const TextStyle(color: Colors.black87),
+      labelStyle: const TextStyle(color: darkGray),
       suffixIcon: const Icon(
-        Icons.calendar_today_rounded,
-        color: Colors.black,
+        Icons.calendar_today_outlined,
+        color: primaryBlue,
       ),
       enabledBorder: OutlineInputBorder(
-        borderSide: const BorderSide(color: Colors.black26, width: 1.5),
-        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: mediumGray, width: 2.0),
+        borderRadius: BorderRadius.circular(12),
       ),
       focusedBorder: OutlineInputBorder(
-        borderSide: const BorderSide(color: Colors.black, width: 2.0),
-        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: primaryBlue, width: 2.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      contentPadding: const EdgeInsets.symmetric(
+        vertical: 16.0,
+        horizontal: 16.0,
       ),
       floatingLabelBehavior: FloatingLabelBehavior.auto,
     ),
     controller: TextEditingController(
       text: selectedDate != null
-          ? "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}"
+          ? DateFormat('dd MMM yyyy').format(selectedDate)
           : "",
     ),
+    style: const TextStyle(color: darkGray),
   );
 }
 
@@ -80,12 +95,12 @@ Widget buildCaseCard(
     key: Key(caseId),
     direction: DismissDirection.endToStart,
     background: Container(
-      color: Colors.red,
+      color: Colors.red.shade700,
       alignment: Alignment.centerRight,
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: const Icon(
         Icons.delete_forever,
-        color: Colors.white,
+        color: offWhite,
         size: 30,
       ),
     ),
@@ -98,10 +113,12 @@ Widget buildCaseCard(
     child: GestureDetector(
       onLongPress: () => showCaseDetailsDialog(context, data),
       child: Card(
-        margin: const EdgeInsets.symmetric(vertical: 8),
+        color: Colors.white,
         elevation: 2,
+        margin: const EdgeInsets.symmetric(vertical: 8),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: mediumGray, width: 1.0),
         ),
         child: ListTile(
           contentPadding: const EdgeInsets.all(16),
@@ -110,30 +127,25 @@ Widget buildCaseCard(
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 18,
-              color: Colors.black,
+              color: primaryBlue,
             ),
           ),
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 8),
-              Text(
-                "Case No: $caseNumber",
-                style: const TextStyle(color: Colors.black87),
-              ),
-              Text(
-                "Court: $courtName",
-                style: const TextStyle(color: Colors.black87),
-              ),
-              Text(
-                "Next Date: ${DateFormat('dd/MM/yyyy').format(nextDate)}",
-                style: const TextStyle(color: Colors.black87),
+              _buildDetailRowWithIcon(Icons.looks_one, "Case No:", caseNumber),
+              _buildDetailRowWithIcon(Icons.gavel, "Court:", courtName),
+              _buildDetailRowWithIcon(
+                Icons.calendar_today,
+                "Next Date:",
+                DateFormat('dd MMM yyyy').format(nextDate),
               ),
             ],
           ),
           trailing: showEditButton
               ? IconButton(
-                  icon: const Icon(Icons.edit, color: Colors.blueAccent),
+                  icon: const Icon(Icons.edit, color: primaryBlue),
                   onPressed: () {
                     Navigator.push(
                       context,
@@ -153,79 +165,104 @@ Widget buildCaseCard(
   );
 }
 
-// Reusable function to show case details in a dialog
+// Reusable function to show case details in a dialog with a smooth scale animation
 void showCaseDetailsDialog(BuildContext context, Map<String, dynamic> data) {
-  showDialog(
+  showGeneralDialog(
     context: context,
-    builder: (context) {
-      return AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        title: Text(
-          data['CaseTitleAttribute'] ?? 'Case Details',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              buildDetailRow("Case Number:", data['CaseNumberAttribute']),
-              buildDetailRow("Court Name:", data['CourtNameAttribute']),
-              buildDetailRow("Judge Name:", data['JudgeNameAttribute']),
-              buildDetailRow(
-                "Previous Date:",
-                data['PreviousDateAttribute'] != null
-                    ? DateFormat('dd/MM/yyyy').format(
-                        (data['PreviousDateAttribute'] as Timestamp).toDate(),
-                      )
-                    : 'N/A',
+    barrierDismissible: true,
+    barrierLabel: 'Dialog',
+    transitionDuration: const Duration(milliseconds: 300),
+    pageBuilder: (context, animation, secondaryAnimation) {
+      return Center(
+        child: ScaleTransition(
+          scale: CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOut,
+          ),
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+            title: Text(
+              data['CaseTitleAttribute'] ?? 'Case Details',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: primaryBlue,
               ),
-              buildDetailRow(
-                "Next Date:",
-                data['NextDateAttribute'] != null
-                    ? DateFormat('dd/MM/yyyy').format(
-                        (data['NextDateAttribute'] as Timestamp).toDate(),
-                      )
-                    : 'N/A',
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildDetailRowWithIcon(Icons.looks_one_outlined, "Case Number:", data['CaseNumberAttribute']),
+                  _buildDetailRowWithIcon(Icons.gavel_outlined, "Court Name:", data['CourtNameAttribute']),
+                  _buildDetailRowWithIcon(Icons.account_circle_outlined, "Judge Name:", data['JudgeNameAttribute']),
+                  _buildDetailRowWithIcon(
+                    Icons.calendar_today_outlined,
+                    "Previous Date:",
+                    data['PreviousDateAttribute'] != null
+                        ? DateFormat('dd MMM yyyy').format((data['PreviousDateAttribute'] as Timestamp).toDate())
+                        : 'N/A',
+                  ),
+                  _buildDetailRowWithIcon(
+                    Icons.calendar_today_outlined,
+                    "Next Date:",
+                    data['NextDateAttribute'] != null
+                        ? DateFormat('dd MMM yyyy').format((data['NextDateAttribute'] as Timestamp).toDate())
+                        : 'N/A',
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "Notes:",
+                    style: TextStyle(fontWeight: FontWeight.bold, color: darkGray),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    data['NotesAttribute'] ?? 'N/A',
+                    style: const TextStyle(color: darkGray),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              const Text(
-                "Notes:",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Text(
-                data['NotesAttribute'] ?? 'N/A',
-                style: const TextStyle(color: Colors.black87),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text(
+                  "Close",
+                  style: TextStyle(color: primaryBlue, fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text("Close", style: TextStyle(color: Colors.black)),
-          ),
-        ],
       );
     },
   );
 }
 
-// Reusable function to build detail rows for the dialog
-Widget buildDetailRow(String label, String? value) {
+// Reusable function to build detail rows for the dialog with icons
+Widget _buildDetailRowWithIcon(IconData icon, String label, String? value) {
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 4.0),
-    child: RichText(
-      text: TextSpan(
-        style: const TextStyle(color: Colors.black87),
-        children: [
-          TextSpan(
-            text: label,
-            style: const TextStyle(fontWeight: FontWeight.bold),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 20, color: darkGray),
+        const SizedBox(width: 8),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              style: const TextStyle(color: darkGray, fontSize: 16),
+              children: [
+                TextSpan(
+                  text: label,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                TextSpan(text: " $value"),
+              ],
+            ),
           ),
-          TextSpan(text: " $value"),
-        ],
-      ),
+        ),
+      ],
     ),
   );
 }

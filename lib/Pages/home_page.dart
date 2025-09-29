@@ -4,49 +4,75 @@ import 'package:vakeel_diary/Database/crud_operation.dart';
 import 'package:vakeel_diary/widgets/bottom_nav_bar.dart';
 import 'package:vakeel_diary/widgets/reusable_widgets.dart';
 
+// --- THEME COLORS ---
+const Color primaryBlue = Color(0xFF1A237E);
+const Color offWhite = Color(0xFFF5F5F5);
+const Color darkGray = Color(0xFF424242);
+
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // The Scaffold widget automatically handles extending the background
-      // color to the edges of the screen, including the "safe area"
-      // where the gesture bar is located.
-      backgroundColor: Colors.white,
-
+      backgroundColor: offWhite,
       appBar: AppBar(
         title: const Text(
           "Today's Cases",
-          style: TextStyle(color: Colors.black),
+          style: TextStyle(
+            color: darkGray,
+            fontWeight: FontWeight.bold,
+            fontSize: 24, // A slightly larger font size for a bolder look
+          ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        backgroundColor: offWhite,
+        elevation: 0, // A clean, flat app bar
+        iconTheme: const IconThemeData(color: darkGray),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: CrudOperation().readTodayCases(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
-              child: CircularProgressIndicator(color: Colors.black),
+              child: CircularProgressIndicator(color: primaryBlue),
             );
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(
+            return Center(
               child: Text(
-                "No cases scheduled for today.",
-                style: TextStyle(color: Colors.black54, fontSize: 16),
+                'Error: ${snapshot.error}',
+                style: const TextStyle(color: darkGray),
               ),
             );
           }
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "No cases scheduled for today.",
+                    style: TextStyle(
+                      color: darkGray,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text("🎉", style: TextStyle(fontSize: 24)),
+                ],
+              ),
+            );
+          }
+
           final cases = snapshot.data!.docs;
+
           return ListView.builder(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
             itemCount: cases.length,
             itemBuilder: (context, index) {
               final caseDoc = cases[index];
@@ -57,10 +83,6 @@ class HomePage extends StatelessWidget {
           );
         },
       ),
-      // This is the correct place for your bottom navigation bar.
-      // Placing it within the Scaffold's bottomNavigationBar property
-      // ensures it is correctly positioned and its background extends
-      // to the bottom of the screen.
       bottomNavigationBar: const BottomNavBar(selectedIndex: 0),
     );
   }

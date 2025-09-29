@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:vakeel_diary/Database/crud_operation.dart';
 import 'package:vakeel_diary/Pages/home_page.dart';
-import 'package:vakeel_diary/Pages/list_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:vakeel_diary/widgets/reusable_widgets.dart';
+import 'package:vakeel_diary/widgets/bottom_nav_bar.dart';
+
+// --- THEME COLORS ---
+const Color primaryBlue = Color(0xFF1A237E);
+const Color offWhite = Color(0xFFF5F5F5);
+const Color darkGray = Color(0xFF424242);
+const Color lightGray = Color(0xFFE0E0E0);
 
 class AddCasePage extends StatefulWidget {
   final String? caseId;
@@ -23,7 +29,7 @@ class _AddCasePageState extends State<AddCasePage> {
   final TextEditingController _notesController = TextEditingController();
   DateTime? _previousDate;
   DateTime? _nextDate;
-  int _selectedIndex = 1;
+  bool _isPressed = false; // New state variable for button animation
 
   @override
   void initState() {
@@ -60,30 +66,6 @@ class _AddCasePageState extends State<AddCasePage> {
     super.dispose();
   }
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-
-    switch (index) {
-      case 0:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
-        );
-        break;
-      case 1:
-        // Already on AddCasePage
-        break;
-      case 2:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const ReadData()),
-        );
-        break;
-    }
-  }
-
   Future<void> _selectDate(BuildContext context, bool isPreviousDate) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -96,9 +78,14 @@ class _AddCasePageState extends State<AddCasePage> {
         return Theme(
           data: ThemeData.light().copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Colors.blueAccent,
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
+              primary: primaryBlue,
+              onPrimary: offWhite,
+              onSurface: darkGray,
+            ),
+            dialogTheme: const DialogThemeData(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(12)),
+              ),
             ),
           ),
           child: child!,
@@ -128,7 +115,7 @@ class _AddCasePageState extends State<AddCasePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Please fill in all fields."),
-          backgroundColor: Colors.red,
+          backgroundColor: primaryBlue,
         ),
       );
       return;
@@ -180,16 +167,20 @@ class _AddCasePageState extends State<AddCasePage> {
     bool isUpdateMode = widget.caseId != null;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: offWhite,
       appBar: AppBar(
         title: Text(
           isUpdateMode ? "Update Case" : "Add New Case",
-          style: const TextStyle(color: Colors.black),
+          style: const TextStyle(
+            color: darkGray,
+            fontWeight: FontWeight.bold,
+            fontSize: 24,
+          ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: offWhite,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme: const IconThemeData(color: darkGray),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
@@ -200,7 +191,7 @@ class _AddCasePageState extends State<AddCasePage> {
               isUpdateMode
                   ? "Update the case details."
                   : "Enter the case details to add a new record.",
-              style: const TextStyle(color: Colors.black54, fontSize: 16),
+              style: const TextStyle(color: darkGray, fontSize: 16),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 48),
@@ -230,40 +221,38 @@ class _AddCasePageState extends State<AddCasePage> {
             const SizedBox(height: 24),
             buildTextField("Notes", _notesController, maxLines: 5),
             const SizedBox(height: 48),
-            ElevatedButton(
-              onPressed: _submitData,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                elevation: 0,
-                textStyle: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+            GestureDetector(
+              onTapDown: (_) => setState(() => _isPressed = true),
+              onTapUp: (_) => setState(() => _isPressed = false),
+              onTapCancel: () => setState(() => _isPressed = false),
+              onTap: _submitData,
+              child: AnimatedScale(
+                scale: _isPressed ? 0.95 : 1.0,
+                duration: const Duration(milliseconds: 100),
+                curve: Curves.easeInOut,
+                child: ElevatedButton(
+                  onPressed: _submitData,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryBlue,
+                    foregroundColor: offWhite,
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                    textStyle: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  child: Text(isUpdateMode ? "UPDATE" : "SUBMIT"),
                 ),
               ),
-              child: Text(isUpdateMode ? "UPDATE" : "SUBMIT"),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.add), label: 'Add'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list_alt),
-            label: 'View All',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.black54,
-        onTap: _onItemTapped,
-      ),
+      bottomNavigationBar: const BottomNavBar(selectedIndex: 1),
     );
   }
 }
