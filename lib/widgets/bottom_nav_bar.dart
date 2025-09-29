@@ -35,19 +35,27 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      items: const <BottomNavigationBarItem>[
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.add), label: 'Add'),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.list_alt),
-          label: 'View All',
+    return Container(
+      // This Container will hold the background color for the entire nav bar area.
+      color: Colors.white,
+      child: SafeArea(
+        // The SafeArea widget ensures its children stay within the "safe" area of the screen,
+        // which pushes the content up while allowing the parent container's color to fill the space below.
+        child: BottomNavigationBar(
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+            BottomNavigationBarItem(icon: Icon(Icons.add), label: 'Add'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.list_alt),
+              label: 'View All',
+            ),
+          ],
+          currentIndex: selectedIndex,
+          selectedItemColor: Colors.black,
+          unselectedItemColor: Colors.black54,
+          onTap: (index) => _onItemTapped(context, index),
         ),
-      ],
-      currentIndex: selectedIndex,
-      selectedItemColor: Colors.black,
-      unselectedItemColor: Colors.black54,
-      onTap: (index) => _onItemTapped(context, index),
+      ),
     );
   }
 }

@@ -10,7 +10,11 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // The Scaffold widget automatically handles extending the background
+      // color to the edges of the screen, including the "safe area"
+      // where the gesture bar is located.
       backgroundColor: Colors.white,
+
       appBar: AppBar(
         title: const Text(
           "Today's Cases",
@@ -40,9 +44,7 @@ class HomePage extends StatelessWidget {
               ),
             );
           }
-
           final cases = snapshot.data!.docs;
-
           return ListView.builder(
             padding: const EdgeInsets.all(16.0),
             itemCount: cases.length,
@@ -50,12 +52,15 @@ class HomePage extends StatelessWidget {
               final caseDoc = cases[index];
               final caseId = caseDoc.id;
               final data = caseDoc.data() as Map<String, dynamic>;
-
               return buildCaseCard(context, caseId, data, false);
             },
           );
         },
       ),
+      // This is the correct place for your bottom navigation bar.
+      // Placing it within the Scaffold's bottomNavigationBar property
+      // ensures it is correctly positioned and its background extends
+      // to the bottom of the screen.
       bottomNavigationBar: const BottomNavBar(selectedIndex: 0),
     );
   }
