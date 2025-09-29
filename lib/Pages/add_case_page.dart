@@ -3,6 +3,7 @@ import 'package:vakeel_diary/Database/crud_operation.dart';
 import 'package:vakeel_diary/Pages/home_page.dart';
 import 'package:vakeel_diary/Pages/list_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:vakeel_diary/widgets/reusable_widgets.dart';
 
 class AddCasePage extends StatefulWidget {
   final String? caseId;
@@ -28,16 +29,23 @@ class _AddCasePageState extends State<AddCasePage> {
   void initState() {
     super.initState();
     if (widget.initialData != null) {
-      _caseTitleController.text = widget.initialData!['CaseTitleAttribute'] ?? '';
-      _caseNumberController.text = widget.initialData!['CaseNumberAttribute'] ?? '';
-      _courtNameController.text = widget.initialData!['CourtNameAttribute'] ?? '';
-      _judgeNameController.text = widget.initialData!['JudgeNameAttribute'] ?? '';
+      _caseTitleController.text =
+          widget.initialData!['CaseTitleAttribute'] ?? '';
+      _caseNumberController.text =
+          widget.initialData!['CaseNumberAttribute'] ?? '';
+      _courtNameController.text =
+          widget.initialData!['CourtNameAttribute'] ?? '';
+      _judgeNameController.text =
+          widget.initialData!['JudgeNameAttribute'] ?? '';
       _notesController.text = widget.initialData!['NotesAttribute'] ?? '';
       if (widget.initialData!['PreviousDateAttribute'] != null) {
-        _previousDate = (widget.initialData!['PreviousDateAttribute'] as Timestamp).toDate();
+        _previousDate =
+            (widget.initialData!['PreviousDateAttribute'] as Timestamp)
+                .toDate();
       }
       if (widget.initialData!['NextDateAttribute'] != null) {
-        _nextDate = (widget.initialData!['NextDateAttribute'] as Timestamp).toDate();
+        _nextDate = (widget.initialData!['NextDateAttribute'] as Timestamp)
+            .toDate();
       }
     }
   }
@@ -79,16 +87,18 @@ class _AddCasePageState extends State<AddCasePage> {
   Future<void> _selectDate(BuildContext context, bool isPreviousDate) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: isPreviousDate ? _previousDate ?? DateTime.now() : _nextDate ?? DateTime.now(),
+      initialDate: isPreviousDate
+          ? _previousDate ?? DateTime.now()
+          : _nextDate ?? DateTime.now(),
       firstDate: DateTime(2000),
       lastDate: DateTime(2101),
       builder: (context, child) {
         return Theme(
           data: ThemeData.light().copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Colors.blueAccent, // header background color
-              onPrimary: Colors.white, // header text color
-              onSurface: Colors.black, // calendar text color
+              primary: Colors.blueAccent,
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
             ),
           ),
           child: child!,
@@ -106,8 +116,7 @@ class _AddCasePageState extends State<AddCasePage> {
     }
   }
 
-  void _submitData() {
-    // Basic validation to ensure all fields are filled.
+  void _submitData() async {
     if (_caseTitleController.text.isEmpty ||
         _caseNumberController.text.isEmpty ||
         _courtNameController.text.isEmpty ||
@@ -115,6 +124,7 @@ class _AddCasePageState extends State<AddCasePage> {
         _previousDate == null ||
         _nextDate == null ||
         _notesController.text.isEmpty) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Please fill in all fields."),
@@ -124,8 +134,10 @@ class _AddCasePageState extends State<AddCasePage> {
       return;
     }
 
+    if (!mounted) return;
+
     if (widget.caseId != null) {
-      CrudOperation().update(
+      await CrudOperation().update(
         widget.caseId!,
         _caseTitleController.text,
         _caseNumberController.text,
@@ -135,11 +147,12 @@ class _AddCasePageState extends State<AddCasePage> {
         _nextDate!,
         _notesController.text,
       );
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Case updated successfully!")),
       );
     } else {
-      CrudOperation().create(
+      await CrudOperation().create(
         _caseTitleController.text,
         _caseNumberController.text,
         _courtNameController.text,
@@ -148,11 +161,18 @@ class _AddCasePageState extends State<AddCasePage> {
         _nextDate!,
         _notesController.text,
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Case added successfully!")),
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Case added successfully!")));
+    }
+
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomePage()),
       );
     }
-    Navigator.pop(context); // Go back to the previous page
   }
 
   @override
@@ -162,8 +182,10 @@ class _AddCasePageState extends State<AddCasePage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(isUpdateMode ? "Update Case" : "Add New Case",
-            style: const TextStyle(color: Colors.black)),
+        title: Text(
+          isUpdateMode ? "Update Case" : "Add New Case",
+          style: const TextStyle(color: Colors.black),
+        ),
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
@@ -182,40 +204,32 @@ class _AddCasePageState extends State<AddCasePage> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 48),
-
-            // Text fields for case details
-            _buildTextField("Case Title", _caseTitleController),
+            buildTextField("Case Title", _caseTitleController),
             const SizedBox(height: 24),
-            _buildTextField(
+            buildTextField(
               "Case Number",
               _caseNumberController,
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 24),
-            _buildTextField("Court Name", _courtNameController),
+            buildTextField("Court Name", _courtNameController),
             const SizedBox(height: 24),
-            _buildTextField("Judge Name", _judgeNameController),
+            buildTextField("Judge Name", _judgeNameController),
             const SizedBox(height: 24),
-
-            // Date fields
-            _buildDateField(
+            buildDateField(
               "Previous Hearing Date",
               _previousDate,
               () => _selectDate(context, true),
             ),
             const SizedBox(height: 24),
-            _buildDateField(
+            buildDateField(
               "Next Hearing Date",
               _nextDate,
               () => _selectDate(context, false),
             ),
             const SizedBox(height: 24),
-
-            // Notes field
-            _buildTextField("Notes", _notesController, maxLines: 5),
+            buildTextField("Notes", _notesController, maxLines: 5),
             const SizedBox(height: 48),
-
-            // Submit/Update Button
             ElevatedButton(
               onPressed: _submitData,
               style: ElevatedButton.styleFrom(
@@ -249,70 +263,6 @@ class _AddCasePageState extends State<AddCasePage> {
         selectedItemColor: Colors.black,
         unselectedItemColor: Colors.black54,
         onTap: _onItemTapped,
-      ),
-    );
-  }
-
-  // A helper method to build text fields with consistent styling.
-  Widget _buildTextField(
-    String labelText,
-    TextEditingController controller, {
-    int maxLines = 1,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      cursorColor: Colors.black,
-      decoration: InputDecoration(
-        labelText: labelText,
-        labelStyle: const TextStyle(color: Colors.black87),
-        hintStyle: const TextStyle(color: Colors.black26),
-        enabledBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Colors.black26, width: 1.5),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Colors.black, width: 2.0),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        floatingLabelBehavior: FloatingLabelBehavior.auto,
-      ),
-      style: const TextStyle(color: Colors.black),
-    );
-  }
-
-  // A helper method for building the date picker fields.
-  Widget _buildDateField(
-    String labelText,
-    DateTime? selectedDate,
-    VoidCallback onTap,
-  ) {
-    return TextFormField(
-      readOnly: true,
-      onTap: onTap,
-      decoration: InputDecoration(
-        labelText: labelText,
-        labelStyle: const TextStyle(color: Colors.black87),
-        suffixIcon: const Icon(
-          Icons.calendar_today_rounded,
-          color: Colors.black,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Colors.black26, width: 1.5),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Colors.black, width: 2.0),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        floatingLabelBehavior: FloatingLabelBehavior.auto,
-      ),
-      controller: TextEditingController(
-        text: selectedDate != null
-            ? "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}"
-            : "",
       ),
     );
   }
